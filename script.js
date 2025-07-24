@@ -257,15 +257,198 @@ class Cart {
 	}
 }
 
-const hamburger = document.querySelector('.hamburger');
-const navMenu = document.querySelector('nav ul');
+// Hamburger Menu functionality
+class MobileMenu {
+    constructor() {
+        this.hamburger = document.querySelector('.hamburger');
+        this.navMenu = document.querySelector('nav ul');
+        this.init();
+    }
 
-// Toggle a class to show/hide the menu on click
-hamburger.addEventListener('click', () => {
-	navMenu.classList.toggle('active');
-});
+    init() {
+        if (this.hamburger && this.navMenu) {
+            this.hamburger.addEventListener('click', () => {
+                this.toggleMenu();
+            });
 
-// Initialize cart and mobile menu when DOM is loaded
+            // Close menu when clicking on a nav link
+            this.navMenu.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    this.closeMenu();
+                }
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!this.hamburger.contains(e.target) && !this.navMenu.contains(e.target)) {
+                    this.closeMenu();
+                }
+            });
+        }
+    }
+
+    toggleMenu() {
+        console.log('Hamburger clicked!'); // Debug log
+        this.hamburger.classList.toggle('active');
+        this.navMenu.classList.toggle('mobile-active');
+    }
+
+    closeMenu() {
+        this.hamburger.classList.remove('active');
+        this.navMenu.classList.remove('mobile-active');
+    }
+}
+
+// Contact Form functionality
+class ContactForm {
+    constructor() {
+        this.form = document.querySelector('.input-sec');
+        this.sendButton = this.form?.querySelector('button');
+        this.nameInput = this.form?.querySelector('input[placeholder="name"]');
+        this.phoneInput = this.form?.querySelector('input[placeholder="phone number"]');
+        this.emailInput = this.form?.querySelector('input[placeholder="email"]');
+        this.messageTextarea = this.form?.querySelector('textarea');
+        this.init();
+    }
+
+    init() {
+        if (this.sendButton) {
+            this.sendButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleSubmit();
+            });
+        }
+    }
+
+    handleSubmit() {
+        const formData = this.validateForm();
+        
+        if (!formData.isValid) {
+            this.showErrorPopup(formData.errors);
+            return;
+        }
+
+        // Show loading state
+        this.sendButton.textContent = 'Sending...';
+        this.sendButton.disabled = true;
+
+        // Simulate sending (2 seconds delay)
+        setTimeout(() => {
+            this.showSuccessPopup();
+            this.clearForm();
+            
+            // Reset button
+            this.sendButton.textContent = 'send';
+            this.sendButton.disabled = false;
+        }, 2000);
+    }
+
+    validateForm() {
+        const errors = [];
+        let isValid = true;
+
+        // Check name
+        if (!this.nameInput?.value.trim()) {
+            errors.push('Name is required');
+            isValid = false;
+        }
+
+        // Check phone
+        if (!this.phoneInput?.value.trim()) {
+            errors.push('Phone number is required');
+            isValid = false;
+        } else if (!/^\d{10,}$/.test(this.phoneInput.value.trim())) {
+            errors.push('Please enter a valid phone number');
+            isValid = false;
+        }
+
+        // Check email
+        if (!this.emailInput?.value.trim()) {
+            errors.push('Email is required');
+            isValid = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.emailInput.value.trim())) {
+            errors.push('Please enter a valid email address');
+            isValid = false;
+        }
+
+        // Check message
+        if (!this.messageTextarea?.value.trim()) {
+            errors.push('Message is required');
+            isValid = false;
+        }
+
+        return { isValid, errors };
+    }
+
+    showErrorPopup(errors) {
+        const errorMessage = errors.length === 1 
+            ? errors[0] 
+            : 'Please fix the following:\n• ' + errors.join('\n• ');
+            
+        this.showNotification('Form Validation Error', errorMessage, 'error');
+    }
+
+    showSuccessPopup() {
+        this.showNotification(
+            'Message Sent Successfully! 📧', 
+            'Thank you for contacting us. We will get back to you within 24 hours.', 
+            'success'
+        );
+    }
+
+    clearForm() {
+        if (this.nameInput) this.nameInput.value = '';
+        if (this.phoneInput) this.phoneInput.value = '';
+        if (this.emailInput) this.emailInput.value = '';
+        if (this.messageTextarea) this.messageTextarea.value = '';
+    }
+
+    showNotification(title, message, type = 'success') {
+        // Remove existing notification if any
+        const existingNotification = document.querySelector('.notification-overlay');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'notification-overlay';
+
+        // Create notification
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+        
+        notification.innerHTML = `
+            <div class="notification-icon">${icon}</div>
+            <h3>${title}</h3>
+            <p style="white-space: pre-line;">${message}</p>
+            <button class="notification-btn" onclick="this.closest('.notification-overlay').remove()">OK</button>
+        `;
+
+        overlay.appendChild(notification);
+        document.body.appendChild(overlay);
+
+        // Auto remove after 4 seconds for error, 3 for success
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.remove();
+            }
+        }, type === 'error' ? 4000 : 3000);
+
+        // Remove on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        });
+    }
+}
+
+// Initialize cart, mobile menu, and contact form when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
 	window.cart = new Cart();
+    window.mobileMenu = new MobileMenu();
+    window.contactForm = new ContactForm();
 });
